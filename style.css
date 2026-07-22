@@ -386,6 +386,22 @@ main{padding:16px;display:block;max-width:760px;margin-inline:auto}
   padding:12px 14px;font-size:.82rem;line-height:1.8;color:var(--txt2);margin-top:12px;
 }
 .wiz-hint b{color:var(--txt)}
+.wiz-plan-btn{
+  display:block;width:100%;text-align:center;margin:14px 0 4px;cursor:pointer;
+  background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4);color:var(--good);
+  font-family:inherit;font-weight:800;font-size:.9rem;border-radius:14px;padding:14px;
+}
+.brand-guide{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.brand-guide-title{font-size:.86rem;font-weight:800;margin-bottom:10px}
+.brand-btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.brand-btn{
+  border:1px solid var(--line);background:var(--card2);color:var(--txt2);
+  font-family:inherit;font-weight:700;font-size:.78rem;border-radius:99px;padding:7px 14px;cursor:pointer;transition:.2s;
+}
+.brand-btn.active{background:var(--grad);color:#06121f;border-color:transparent}
+.brand-detail{display:flex;flex-direction:column;gap:8px}
+.bd-row{font-size:.82rem;line-height:1.7;color:var(--txt2);background:var(--card2);border-radius:10px;padding:9px 12px;border-right:3px solid var(--accent2)}
+.bd-row b{color:var(--txt)}
 .wiz-check{
   display:flex;align-items:center;gap:12px;margin-top:18px;
   background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;

@@ -767,8 +767,21 @@ $('btnCopyReport').addEventListener('click', async () => {
 /* ============================================================
    معالج ضبط الراوتر — يحوّل القياسات الحقيقية لخطوات عملية
    ============================================================ */
+const BRANDS = {
+  stc: { name: 'STC / جوّي', gw: '192.168.100.1 أو 192.168.8.1', login: 'admin + كلمة المرور المطبوعة على ملصق الراوتر',
+    dns: 'Advanced → WAN / Internet Settings → خانة DNS', wifi: 'WLAN / WiFi Settings — افصل 2.4 و 5 جيجا', qos: 'Advanced → QoS أو Home Network', fw: 'System Tools → Firmware Upgrade' },
+  tplink: { name: 'TP-Link', gw: 'tplinkwifi.net أو 192.168.0.1', login: 'admin / admin (أو ما ضبطته أنت)',
+    dns: 'Advanced → Network → DHCP Server → Primary/Secondary DNS', wifi: 'Wireless — النطاقان 2.4 و 5 منفصلان', qos: 'Advanced → QoS', fw: 'Advanced → System → Firmware Update' },
+  huawei: { name: 'هواوي Huawei', gw: '192.168.100.1', login: 'admin + الملصق (أحياناً telecomadmin)',
+    dns: 'Internet → WAN → DNS Servers', wifi: 'My WiFi / WLAN Settings', qos: 'Home Network → QoS', fw: 'Maintain → Device Management' },
+  zte: { name: 'ZTE', gw: '192.168.1.1', login: 'admin / admin (أو الملصق)',
+    dns: 'Internet → WAN Connection → DNS', wifi: 'WLAN Settings', qos: 'Application → QoS', fw: 'Administration → System Management' },
+  other: { name: 'راوتر آخر', gw: 'انظر ملصق الراوتر', login: 'انظر ملصق الراوتر (Username/Password)',
+    dns: 'ابحث عن DNS داخل WAN / Internet أو DHCP', wifi: 'Wireless / WiFi Settings', qos: 'ابحث عن QoS أو Bandwidth Control أو SQM', fw: 'System / Maintenance → Firmware Update' }
+};
+
 const Wizard = {
-  step: 0, steps: [], before: null, gateway: '192.168.1.1',
+  step: 0, steps: [], before: null, gateway: '192.168.1.1', brand: 'stc',
 
   async open() {
     this.gateway = App.gateway || '192.168.1.1';
@@ -796,9 +809,11 @@ const Wizard = {
 
     s.push({
       title: 'افتح لوحة تحكم راوترك',
-      lead: 'كل الضبط يتم من لوحة الراوتر — تأكد أنك متصل بنفس شبكة الواي فاي، ثم افتحها:',
+      lead: 'كل الضبط يتم من لوحة الراوتر — تأكد أنك متصل بنفس شبكة الواي فاي، ثم افتحها. اختر نوع راوترك ليظهر لك مكان كل إعداد بالضبط، وانسخ خطتك كاملة لتلصقها وأنت بالداخل:',
       openRouter: true,
-      hint: 'بيانات الدخول عادةً على ملصق أسفل الراوتر (Username/Password). راوترات STC غالباً المستخدم <b>admin</b> وكلمة المرور على الملصق. لو غيّرتها ونسيتها، اضغط زر Reset ~10 ثوانٍ للعودة للإعدادات الافتراضية.',
+      copyPlan: true,
+      brandGuide: true,
+      hint: 'بيانات الدخول عادةً على ملصق أسفل الراوتر. لو غيّرت كلمة المرور ونسيتها، اضغط زر Reset ~10 ثوانٍ للعودة للإعدادات الافتراضية.',
       check: 'دخلت لوحة الراوتر'
     });
 
@@ -869,6 +884,16 @@ const Wizard = {
       html += `<button class="wiz-open-btn" data-open="http://${this.gateway}/">🔧 افتح لوحة الراوتر (${this.gateway})</button>`;
       html += `<div class="wiz-hint">لو ما فتح، جرّب أحد هذه: ${alts.map(a => `<b>${a}</b>`).join(' • ')}</div>`;
     }
+    if (s.copyPlan) {
+      html += `<button class="wiz-plan-btn" id="wizCopyPlan">📋 انسخ خطة الضبط كاملة</button>`;
+    }
+    if (s.brandGuide) {
+      html += `<div class="brand-guide"><div class="brand-guide-title">📖 اختر نوع راوترك:</div><div class="brand-btns">`;
+      Object.keys(BRANDS).forEach(k => {
+        html += `<button class="brand-btn${this.brand === k ? ' active' : ''}" data-brand="${k}">${BRANDS[k].name}</button>`;
+      });
+      html += `</div><div id="brandDetail" class="brand-detail"></div></div>`;
+    }
     if (s.values) {
       html += '<div class="wiz-values">';
       s.values.forEach(([k, v]) => html += `<div class="wiz-val"><span>${k}</span><b>${v}</b><button class="wiz-copy" data-copy="${v}">نسخ</button></div>`);
@@ -880,8 +905,61 @@ const Wizard = {
 
     body.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => navigator.clipboard.writeText(b.dataset.copy).then(() => toast('📋 نُسخ: ' + b.dataset.copy)).catch(() => {})));
     body.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => window.open(b.dataset.open, '_blank')));
+    const planBtn = $('wizCopyPlan');
+    if (planBtn) planBtn.addEventListener('click', () => this.copyPlan());
+    if (s.brandGuide) {
+      this.renderBrand();
+      body.querySelectorAll('[data-brand]').forEach(b => b.addEventListener('click', () => {
+        this.brand = b.dataset.brand;
+        body.querySelectorAll('[data-brand]').forEach(x => x.classList.toggle('active', x === b));
+        this.renderBrand();
+      }));
+    }
     const chk = $('wizChk');
     if (chk) chk.addEventListener('change', () => s.done = chk.checked);
+  },
+
+  renderBrand() {
+    const el = $('brandDetail');
+    if (!el) return;
+    const b = BRANDS[this.brand];
+    el.innerHTML = [
+      ['🔑 الدخول', `${b.gw} — ${b.login}`],
+      ['🌐 مكان DNS', b.dns],
+      ['📶 مكان إعداد الواي فاي', b.wifi],
+      ['⚡ مكان QoS/SQM', b.qos],
+      ['⬆️ مكان تحديث النظام', b.fw]
+    ].map(([k, v]) => `<div class="bd-row"><b>${k}:</b> ${v}</div>`).join('');
+  },
+
+  copyPlan() {
+    const dns = App.fastestDns;
+    const dnsMain = dns ? dns.ip : '1.1.1.1';
+    const dnsAlt = dnsMain === '1.1.1.1' ? '1.0.0.1' : '8.8.4.4';
+    const b = BRANDS[this.brand];
+    const bloatHigh = Home.last.bloat != null && Home.last.bloat >= 100;
+    const speedHint = (Home.last.down && Home.last.up) ? ` (سرعة باقتك تقريباً: ${Home.last.down} تحميل / ${Home.last.up} رفع)` : '';
+    const plan =
+`📋 خطة ضبط راوترك — راوتر السعودية الذكي
+🔧 لوحة الراوتر: http://${this.gateway}/
+📖 نوع الراوتر: ${b.name} — الدخول: ${b.login}
+
+1) DNS  (المكان: ${b.dns})
+   • الأساسي: ${dnsMain}${dns ? `   ← الأسرع لك بقياس فعلي (${dns.ms}ms)` : ''}
+   • الاحتياطي: ${dnsAlt}
+
+2) أسماء الشبكات — افصل النطاقين  (المكان: ${b.wifi})
+   • 5 جيجا (سرعة وألعاب): MyWiFi_5G
+   • 2.4 جيجا (تغطية بعيدة): MyWiFi_2G
+
+3) QoS/SQM: فعّلها${speedHint}  (المكان: ${b.qos})${bloatHigh ? `\n   ⚠️ مهم لك: قياسك أظهر Bufferbloat +${Home.last.bloat}ms — تفعيل SQM يعالج اللاق وقت التحميل.` : ''}
+
+4) القناة: اضبطها Auto أو جرّب 1/6/11 لنطاق 2.4 جيجا
+
+5) حدّث النظام (Firmware) ثم أعد تشغيل الراوتر  (المكان: ${b.fw})
+
+— بعد الانتهاء: ارجع للتطبيق واضغط «قِس بعد الضبط» لترى الفرق بالأرقام.`;
+    navigator.clipboard.writeText(plan).then(() => toast('📋 نُسخت خطة الضبط كاملة — الصقها عندك واتبعها داخل الراوتر')).catch(() => toast('تعذّر النسخ'));
   },
 
   renderCompare(body) {
