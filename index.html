@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b1120">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>راوتر السعودية الذكي</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== الهيدر ===== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M2 12.5a14 14 0 0 1 20 0"/><path d="M5.5 16a9 9 0 0 1 13 0"/><path d="M9 19.5a4 4 0 0 1 6 0"/><circle cx="12" cy="21.5" r="1" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>راوتر السعودية الذكي</h1>
+      <span id="netStatusLabel" class="net-status">جارٍ الفحص…</span>
+    </div>
+  </div>
+  <button id="btnOptimize" class="btn-optimize">
+    <span class="spark">⚡</span><span id="optimizeLabel">تحسين تلقائي</span>
+  </button>
+</header>
+
+<!-- شريط تنبيه الحماية -->
+<div id="securityBanner" class="security-banner hidden">
+  <span>🚨</span>
+  <p id="securityBannerText">جهاز غير معروف انضم للشبكة!</p>
+  <button id="securityBannerAction">عرض</button>
+</div>
+
+<main id="views">
+
+  <!-- ============ 1) الرئيسية ============ -->
+  <section id="view-home" class="view active">
+
+    <div class="health-card card">
+      <div class="health-ring-wrap">
+        <svg class="health-ring" viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="84"/>
+          <circle id="ringFill" class="ring-fill" cx="100" cy="100" r="84"/>
+        </svg>
+        <div class="health-center">
+          <div id="healthScore" class="health-score">—</div>
+          <div id="healthLabel" class="health-label">صحة الشبكة</div>
+        </div>
+      </div>
+      <div class="quick-stats">
+        <div class="qstat"><span class="qs-icon">📶</span><b id="statPing">—</b><small>Ping (ms)</small></div>
+        <div class="qstat"><span class="qs-icon">📊</span><b id="statJitter">—</b><small>Jitter (ms)</small></div>
+        <div class="qstat"><span class="qs-icon">⬇️</span><b id="statDown">—</b><small>Mbps تقديري</small></div>
+        <div class="qstat"><span class="qs-icon">🌐</span><b id="statType">—</b><small>نوع الاتصال</small></div>
+      </div>
+    </div>
+
+    <!-- اختبار السرعة -->
+    <div class="card speed-card">
+      <div class="card-head">
+        <h2>🚀 اختبار السرعة الحقيقي</h2>
+        <button id="btnSpeedTest" class="btn-primary">ابدأ الاختبار</button>
+      </div>
+      <div class="speed-meter">
+        <div class="speed-value"><span id="speedNow">0</span><small> Mbps</small></div>
+        <div class="speed-bar"><div id="speedBarFill"></div></div>
+        <div id="speedPhase" class="speed-phase">جاهز — الاختبار عبر خوادم Cloudflare</div>
+      </div>
+    </div>
+
+    <!-- كشف الاختناقات -->
+    <div class="card">
+      <div class="card-head"><h2>🔍 كشف الاختناقات</h2></div>
+      <div id="bottleneckList" class="bottleneck-list">
+        <div class="empty-hint">اضغط «تحسين تلقائي» بالأعلى ليقوم الذكاء الاصطناعي بتحليل شبكتك</div>
+      </div>
+    </div>
+
+    <!-- سجل الذكاء الاصطناعي -->
+    <div class="card">
+      <div class="card-head"><h2>🤖 قرارات الذكاء الاصطناعي</h2></div>
+      <ul id="aiLog" class="ai-log">
+        <li class="ai-idle">النظام يراقب الشبكة في الخلفية…</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 2) الأجهزة والحماية ============ -->
+  <section id="view-devices" class="view">
+    <div class="card">
+      <div class="card-head">
+        <h2>🛡️ الحماية الذكية</h2>
+        <label class="switch">
+          <input type="checkbox" id="shieldToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="shield-stats">
+        <div class="shield-stat"><b id="shieldBlocked">0</b><small>محاولة اختراق مصدودة</small></div>
+        <div class="shield-stat"><b id="shieldDevices">0</b><small>جهاز متصل</small></div>
+        <div class="shield-stat"><b id="shieldAlerts">0</b><small>تنبيه أمني</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>📱 الأجهزة المتصلة</h2>
+        <button id="btnScanDevices" class="btn-ghost">فحص الشبكة</button>
+      </div>
+      <div id="deviceList" class="device-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>👨‍👩‍👧 الرقابة الأبوية</h2></div>
+      <p class="card-desc">فعّل وضع الأطفال على أي جهاز لحجب المحتوى غير المناسب وتحديد وقت الاستخدام، وإيقاف الإنترنت وقت النوم.</p>
+      <div class="kids-row">
+        <div>
+          <b>إيقاف الإنترنت وقت النوم</b>
+          <small id="bedtimeLabel">من 10:00 م إلى 6:00 ص</small>
+        </div>
+        <label class="switch"><input type="checkbox" id="bedtimeToggle"><span class="slider"></span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3) التغطية ============ -->
+  <section id="view-coverage" class="view">
+    <div class="card">
+      <div class="card-head"><h2>🗺️ خريطة تغطية البيت</h2></div>
+      <p class="card-desc">امشِ بجوالك لكل غرفة واضغط عليها ثم «قياس هنا» — التطبيق يقيس جودة الإشارة الفعلية ويلوّن الخريطة.</p>
+      <div id="homeMap" class="home-map"></div>
+      <div class="coverage-legend">
+        <span><i class="dot dot-good"></i> ممتازة</span>
+        <span><i class="dot dot-mid"></i> متوسطة</span>
+        <span><i class="dot dot-bad"></i> ضعيفة</span>
+        <span><i class="dot dot-none"></i> لم تُقس</span>
+      </div>
+      <button id="btnMeasureRoom" class="btn-primary btn-block" disabled>اختر غرفة أولاً</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>📡 محلل القنوات</h2><button id="btnScanChannels" class="btn-ghost">تحليل</button></div>
+      <div id="channelChart" class="channel-chart"></div>
+      <div id="channelAdvice" class="advice-box hidden"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>💡 توصيات ذكية</h2></div>
+      <ul id="coverageAdvice" class="advice-list">
+        <li>قِس 3 غرف على الأقل ليقترح الذكاء الاصطناعي أفضل مكان للراوتر.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 4) وضع الألعاب ============ -->
+  <section id="view-gaming" class="view">
+    <div class="card gaming-hero">
+      <div class="card-head">
+        <h2>🎮 وضع الألعاب الفائق</h2>
+        <label class="switch"><input type="checkbox" id="gamingToggle"><span class="slider"></span></label>
+      </div>
+      <div class="gaming-ping">
+        <div id="gamePing" class="game-ping-value">—</div>
+        <div class="game-ping-unit">ms</div>
+      </div>
+      <div id="gameGrade" class="game-grade">شغّل الوضع لبدء المراقبة الحية</div>
+      <canvas id="pingCanvas" width="640" height="160"></canvas>
+      <div class="gaming-stats">
+        <div class="gstat"><b id="gJitter">—</b><small>Jitter</small></div>
+        <div class="gstat"><b id="gLoss">—</b><small>فقدان الحزم</small></div>
+        <div class="gstat"><b id="gAvg">—</b><small>متوسط Ping</small></div>
+        <div class="gstat"><b id="gBest">—</b><small>أفضل Ping</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>🌍 خادم القياس</h2></div>
+      <div class="server-row" id="serverRow">
+        <button class="server-btn active" data-server="cf">Cloudflare<small>الأقرب لك</small></button>
+        <button class="server-btn" data-server="google">Google<small>عالمي</small></button>
+        <button class="server-btn" data-server="ms">Microsoft<small>Azure</small></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>⚙️ تحسينات مفعّلة</h2></div>
+      <ul id="gamingOpts" class="advice-list dim">
+        <li>أولوية قصوى لحزم الألعاب (QoS)</li>
+        <li>تجميد التحديثات الخلفية أثناء اللعب</li>
+        <li>توجيه مباشر لأقرب خادم ألعاب</li>
+        <li>حماية من تقلبات الـ Ping</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 5) التشخيص ============ -->
+  <section id="view-diagnose" class="view">
+    <div class="card">
+      <div class="card-head">
+        <h2>🩺 التشخيص الذكي الشامل</h2>
+        <button id="btnDiagnose" class="btn-primary">ابدأ الفحص</button>
+      </div>
+      <p class="card-desc">بدل ما تتصل بالدعم الفني… التطبيق يفحص كل شيء ويقول لك وين المشكلة، وش سببها، وكيف تنحل.</p>
+      <div id="diagSteps" class="diag-steps"></div>
+    </div>
+
+    <div id="diagReportCard" class="card hidden">
+      <div class="card-head">
+        <h2>📋 التقرير النهائي</h2>
+        <button id="btnCopyReport" class="btn-ghost">نسخ للدعم الفني</button>
+      </div>
+      <div id="diagReport" class="diag-report"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== التبويبات السفلية ===== -->
+<nav class="tabbar">
+  <button class="tab active" data-view="home"><span>🏠</span>الرئيسية</button>
+  <button class="tab" data-view="devices"><span>🛡️</span>الأجهزة</button>
+  <button class="tab" data-view="coverage"><span>🗺️</span>التغطية</button>
+  <button class="tab" data-view="gaming"><span>🎮</span>الألعاب</button>
+  <button class="tab" data-view="diagnose"><span>🩺</span>التشخيص</button>
+</nav>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
