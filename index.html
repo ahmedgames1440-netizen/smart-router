@@ -85,6 +85,16 @@
         <div class="empty-hint">اضغط «ابدأ الاختبار» بالأعلى — التحليل يُبنى على قياساتك الفعلية، لا أرقام عشوائية.</div>
       </div>
     </div>
+
+    <!-- معالج ضبط الراوتر -->
+    <div class="card wizard-launch">
+      <div class="wl-icon">⚙️</div>
+      <div class="wl-text">
+        <b>اضبط راوترك لتحسين السرعة</b>
+        <small>معالج ذكي يأخذك خطوة بخطوة داخل راوترك ويضبط الإعدادات حسب قياساتك، ثم يقارن قبل/بعد.</small>
+      </div>
+      <button id="btnOpenWizard" class="btn-primary btn-block">🚀 ابدأ الضبط الآن</button>
+    </div>
   </section>
 
   <!-- ============ 2) جهازي والاتصال ============ -->
@@ -118,6 +128,7 @@
       <h2>ℹ️ عن فحص أجهزة البيت</h2>
       <p class="card-desc">لأسباب أمنية، لا يسمح أي متصفح بمسح الشبكة المحلية أو رؤية أجهزة البيت وعناوينها — هذا يتطلب الدخول على لوحة الراوتر أو تطبيقاً نظامياً. لذلك ركّزنا هنا على ما يمكن قياسه <b>بدقة حقيقية</b> عن جهازك واتصالك، بدل عرض قائمة أجهزة تخمينية.</p>
       <a id="routerLink" class="router-link" target="_blank" rel="noopener">🔧 فتح لوحة الراوتر (192.168.x.1)</a>
+      <button id="btnOpenWizard2" class="btn-primary btn-block" style="margin-top:12px">⚙️ معالج ضبط الراوتر خطوة بخطوة</button>
     </div>
   </section>
 
@@ -215,6 +226,23 @@
   <button class="tab" data-view="gaming"><span>🎮</span>الألعاب</button>
   <button class="tab" data-view="diagnose"><span>🩺</span>التشخيص</button>
 </nav>
+
+<!-- ===== معالج ضبط الراوتر (شاشة كاملة) ===== -->
+<div id="wizard" class="wizard hidden">
+  <div class="wizard-top">
+    <button id="wizClose" class="wiz-close">✕</button>
+    <div class="wiz-title">
+      <b>⚙️ معالج ضبط الراوتر</b>
+      <small id="wizStepLabel">الخطوة 1</small>
+    </div>
+    <div class="wiz-progress"><i id="wizProgress"></i></div>
+  </div>
+  <div id="wizBody" class="wizard-body"></div>
+  <div class="wizard-nav">
+    <button id="wizPrev" class="btn-ghost">السابق</button>
+    <button id="wizNext" class="btn-primary">التالي</button>
+  </div>
+</div>
 
 <div id="toast" class="toast hidden"></div>
 

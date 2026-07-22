@@ -11,6 +11,9 @@ const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+/* حالة عامة يشاركها المعالج (قيم حقيقية مقاسة) */
+const App = { fastestDns: null, gateway: null };
+
 function toast(msg, ms = 2800) {
   const t = $('toast');
   t.textContent = msg;
@@ -371,6 +374,7 @@ const Device = {
 
     // رابط لوحة الراوتر بناءً على IP المحلي إن توفر (وإلا الافتراضي الشائع)
     const gw = localIP && /^(10\.|192\.168\.|172\.)/.test(localIP) ? localIP.replace(/\.\d+$/, '.1') : '192.168.1.1';
+    App.gateway = gw;
     const link = $('routerLink');
     link.href = 'http://' + gw + '/';
     link.textContent = `🔧 فتح لوحة الراوتر (${gw})`;
@@ -442,6 +446,7 @@ $('btnDnsBench').addEventListener('click', async () => {
   const valid = results.filter(r => r.ms != null).sort((a, b) => a.ms - b.ms);
   if (valid.length) {
     const best = valid[0];
+    App.fastestDns = { name: best.name, ip: DNS_PROVIDERS.find(p => p.name === best.name).ip, ms: best.ms };
     list.querySelectorAll('.dns-row').forEach(r => {
       if (r.dataset.p === best.name) r.classList.add('best');
     });
@@ -692,6 +697,7 @@ const Diagnose = {
       if (ms != null && (!bestDns || ms < bestDns.ms)) bestDns = { name: p.name, ip: p.ip, ms };
     }
     back('dns');
+    if (bestDns) App.fastestDns = bestDns;
     set('dns', bestDns ? (bestDns.ms < 120 ? 'ok' : 'warn') : 'fail', bestDns ? `${bestDns.name} ${bestDns.ms}ms` : 'فشل');
     rep.items.push(`أسرع DNS: ${bestDns ? bestDns.name + ' (' + bestDns.ms + 'ms)' : 'غير متاح'}`);
     if (bestDns && bestDns.ms >= 120) rep.problems.push(`استجابة DNS بطيئة — اضبط DNS الراوتر على ${bestDns.ip} (${bestDns.name}).`);
@@ -757,6 +763,195 @@ $('btnCopyReport').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(Diagnose.lastReport || ''); toast('📋 نُسخ التقرير — أرسله للدعم الفني'); }
   catch (e) { toast('تعذّر النسخ'); }
 });
+
+/* ============================================================
+   معالج ضبط الراوتر — يحوّل القياسات الحقيقية لخطوات عملية
+   ============================================================ */
+const Wizard = {
+  step: 0, steps: [], before: null, gateway: '192.168.1.1',
+
+  async open() {
+    this.gateway = App.gateway || '192.168.1.1';
+    if (!App.gateway) {
+      const ip = await getLocalIP(1200);
+      if (ip && /^(10\.|192\.168\.|172\.)/.test(ip)) this.gateway = ip.replace(/\.\d+$/, '.1');
+    }
+    this.before = {
+      down: Home.last.down || null, up: Home.last.up || null,
+      bloat: Home.last.bloat != null ? Home.last.bloat : null,
+      ping: (Home.last.ping && Home.last.ping.avg) || null
+    };
+    this.build();
+    this.step = 0;
+    $('wizard').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    this.render();
+  },
+  close() { $('wizard').classList.add('hidden'); document.body.style.overflow = ''; },
+
+  build() {
+    const dns = App.fastestDns;
+    const bloatHigh = Home.last.bloat != null && Home.last.bloat >= 100;
+    const s = [];
+
+    s.push({
+      title: 'افتح لوحة تحكم راوترك',
+      lead: 'كل الضبط يتم من لوحة الراوتر — تأكد أنك متصل بنفس شبكة الواي فاي، ثم افتحها:',
+      openRouter: true,
+      hint: 'بيانات الدخول عادةً على ملصق أسفل الراوتر (Username/Password). راوترات STC غالباً المستخدم <b>admin</b> وكلمة المرور على الملصق. لو غيّرتها ونسيتها، اضغط زر Reset ~10 ثوانٍ للعودة للإعدادات الافتراضية.',
+      check: 'دخلت لوحة الراوتر'
+    });
+
+    s.push({
+      title: 'اضبط DNS الأسرع',
+      badge: dns ? { t: `الأسرع لك: ${dns.name} (${dns.ms}ms)`, c: 'ok' } : null,
+      lead: 'تغيير DNS يسرّع فتح المواقع والتطبيقات فوراً. في اللوحة ابحث عن <b>DNS</b> (داخل WAN/Internet أو DHCP) وأدخل:',
+      values: dns
+        ? [['DNS الأساسي', dns.ip], ['DNS الاحتياطي', dns.ip === '1.1.1.1' ? '1.0.0.1' : '8.8.4.4']]
+        : [['DNS الأساسي', '1.1.1.1'], ['DNS الاحتياطي', '8.8.8.8']],
+      hint: dns ? '' : 'للأدق: شغّل «أسرع DNS لك» في تبويب جهازي أولاً، وسيظهر هنا الأنسب لموقعك.',
+      check: 'ضبطت DNS'
+    });
+
+    s.push({
+      title: 'افصل نطاقي 2.4 و 5 جيجا',
+      lead: 'أعطِ كل نطاق اسماً مختلفاً لتختار يدوياً: <b>5GHz</b> للسرعة والألعاب في الغرف القريبة، و<b>2.4GHz</b> للتغطية البعيدة والأجهزة الذكية.',
+      values: [['اسم شبكة 5 جيجا', 'MyWiFi_5G'], ['اسم شبكة 2.4 جيجا', 'MyWiFi_2G']],
+      hint: 'ابحث عن <b>Wireless / WiFi Settings</b>، وعطّل «Smart Connect / Band Steering» ليظهر الفصل.',
+      check: 'فصلت النطاقين'
+    });
+
+    s.push({
+      title: bloatHigh ? 'فعّل SQM/QoS — مهم جداً لك' : 'فعّل QoS لأولوية الاستخدام',
+      badge: bloatHigh ? { t: `قياسك: Bufferbloat +${Home.last.bloat}ms`, c: 'hot' } : null,
+      lead: bloatHigh
+        ? 'قياسك أظهر <b>Bufferbloat عالياً</b> — يعني الـ Ping ينهار وقت التحميل ويسبب لاق وتقطيع بالمكالمات والألعاب. الحل الحقيقي: فعّل <b>SQM</b> أو <b>Smart Queue / QoS</b>، وأدخل سرعة باقتك (مثلاً 100 تحميل / 25 رفع).'
+        : 'فعّل <b>QoS</b> لإعطاء أولوية للألعاب والمكالمات على التحميلات الخلفية وقت الزحمة.',
+      hint: 'ابحث عن <b>QoS</b> أو <b>Bandwidth Control</b> أو <b>SQM</b>. لو راوترك لا يدعمها، راوتر يدعم OpenWrt يحلّها تماماً.',
+      check: bloatHigh ? 'فعّلت SQM/QoS' : 'فعّلت QoS'
+    });
+
+    s.push({
+      title: 'حسّن مكان الراوتر والقناة',
+      lead: 'انقل الراوتر لمنتصف البيت، مرتفعاً ~1.5م، بعيداً عن الجدران السميكة والمعادن والمايكروويف. وفي إعدادات Wireless اضبط <b>Channel</b> على Auto أو جرّب قناة أقل ازدحاماً (1/6/11 لنطاق 2.4).',
+      hint: 'استخدم تبويب <b>التغطية</b> لقياس كل غرفة ومعرفة أضعف نقطة — لو غرفة ضعيفة جداً أضف موسّع/Mesh هناك.',
+      check: 'حسّنت الموقع والقناة'
+    });
+
+    s.push({
+      title: 'حدّث النظام وأعد التشغيل',
+      lead: 'ابحث عن <b>Firmware Update</b> وحدّث لأحدث إصدار (يصلح ثغرات ويحسّن الأداء)، ثم أعد تشغيل الراوتر ليطبّق كل التغييرات.',
+      hint: 'بعد إعادة التشغيل انتظر دقيقة كاملة حتى يعود الاتصال، ثم انتقل للخطوة الأخيرة لقياس الفرق.',
+      check: 'حدّثت وأعدت التشغيل'
+    });
+
+    s.push({ compare: true });
+    this.steps = s;
+  },
+
+  render() {
+    const s = this.steps[this.step];
+    const n = this.steps.length;
+    $('wizStepLabel').textContent = `الخطوة ${this.step + 1} من ${n}`;
+    $('wizProgress').style.width = ((this.step + 1) / n * 100) + '%';
+    $('wizPrev').style.visibility = this.step === 0 ? 'hidden' : 'visible';
+    $('wizNext').textContent = this.step === n - 1 ? 'إنهاء' : 'التالي';
+    const body = $('wizBody');
+    body.scrollTop = 0;
+
+    if (s.compare) { this.renderCompare(body); return; }
+
+    let html = `<div class="wiz-step"><div class="wiz-step-num">${this.step + 1}</div>`;
+    if (s.badge) html += `<div class="wiz-badge ${s.badge.c}">${s.badge.t}</div>`;
+    html += `<h3>${s.title}</h3><p class="wiz-lead">${s.lead}</p>`;
+    if (s.openRouter) {
+      const alts = ['192.168.1.1', '192.168.8.1', '192.168.0.1', '10.0.0.1'];
+      html += `<button class="wiz-open-btn" data-open="http://${this.gateway}/">🔧 افتح لوحة الراوتر (${this.gateway})</button>`;
+      html += `<div class="wiz-hint">لو ما فتح، جرّب أحد هذه: ${alts.map(a => `<b>${a}</b>`).join(' • ')}</div>`;
+    }
+    if (s.values) {
+      html += '<div class="wiz-values">';
+      s.values.forEach(([k, v]) => html += `<div class="wiz-val"><span>${k}</span><b>${v}</b><button class="wiz-copy" data-copy="${v}">نسخ</button></div>`);
+      html += '</div>';
+    }
+    if (s.hint) html += `<div class="wiz-hint">${s.hint}</div>`;
+    html += `<div class="wiz-check"><input type="checkbox" id="wizChk"${s.done ? ' checked' : ''}><label for="wizChk">✓ ${s.check}</label></div></div>`;
+    body.innerHTML = html;
+
+    body.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => navigator.clipboard.writeText(b.dataset.copy).then(() => toast('📋 نُسخ: ' + b.dataset.copy)).catch(() => {})));
+    body.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => window.open(b.dataset.open, '_blank')));
+    const chk = $('wizChk');
+    if (chk) chk.addEventListener('change', () => s.done = chk.checked);
+  },
+
+  renderCompare(body) {
+    // خط الأساس صالح فقط إذا احتوى قياس تحميل كامل (لا نكتفي بـ ping وحده)
+    const has = this.before && this.before.down != null;
+    body.innerHTML = `<div class="wiz-step"><div class="wiz-step-num">🏁</div>
+      <h3>قِس الفرق: قبل / بعد</h3>
+      <p class="wiz-lead">اضغط لإجراء قياس حقيقي جديد ومقارنته بقياسك قبل الضبط.${has ? '' : ' <b>لا يوجد قياس سابق — سنأخذ قياس «قبل» الآن، ثم طبّق الخطوات وأعد القياس.</b>'}</p>
+      <button id="wizRetest" class="wiz-open-btn">📊 قِس الآن</button>
+      <div id="wizCmp"></div></div>`;
+    $('wizRetest').addEventListener('click', () => this.retest());
+  },
+
+  async retest() {
+    const btn = $('wizRetest');
+    btn.disabled = true;
+    btn.textContent = '⏱️ قياس الاستجابة…';
+    const p = await pingSample(6);
+    btn.textContent = '⬇️ قياس التحميل…';
+    const down = await downloadTest();
+    btn.textContent = '⬆️ قياس الرفع…';
+    const up = await uploadTest();
+    btn.textContent = '🌊 قياس الاستقرار…';
+    const bb = await bufferbloatTest(() => {});
+    const after = { down, up, bloat: bb.bloat, ping: p.avg };
+    Home.last.down = down; Home.last.up = up; Home.last.bloat = bb.bloat; Home.last.ping = p;
+
+    // إذا لم يوجد خط أساس كامل (تحميل) — نعتمد هذا القياس كـ «قبل»
+    if (!this.before || this.before.down == null) {
+      this.before = after;
+      $('wizCmp').innerHTML = `<div class="wiz-hint">✅ حُفظ هذا كقياس <b>«قبل»</b> (تحميل ${down} • رفع ${up} Mbps). طبّق خطوات الضبط في راوترك، ثم ارجع هنا واضغط «قِس بعد الضبط» لترى الفرق الحقيقي.</div>`;
+      btn.disabled = false; btn.textContent = '📊 قِس بعد الضبط';
+      return;
+    }
+
+    const bef = this.before;
+    const rows = [
+      ['⬇️ تحميل', bef.down, after.down, ' Mbps'],
+      ['⬆️ رفع', bef.up, after.up, ' Mbps'],
+      ['⏱️ Ping', bef.ping, after.ping, ' ms'],
+      ['🌊 Bufferbloat', bef.bloat, after.bloat, ' ms']
+    ];
+    let html = '';
+    rows.forEach(([label, b, a, u]) => {
+      html += `<div class="wiz-cmp-row"><span>${label}</span><b class="bef">${b != null ? b + u : '—'}</b><i>←</i><b class="aft">${a != null ? a + u : '—'}</b></div>`;
+    });
+    const dDown = (after.down || 0) - (bef.down || 0);
+    const dPing = (bef.ping || 0) - (after.ping || 0);
+    const dBloat = (bef.bloat || 0) - (after.bloat || 0);
+    const improved = dDown > 2 || dPing > 5 || dBloat > 20;
+    const bits = [];
+    if (dDown > 2) bits.push(`+${dDown.toFixed(0)} Mbps تحميل`);
+    if (dPing > 5) bits.push(`-${dPing.toFixed(0)}ms استجابة`);
+    if (dBloat > 20) bits.push(`-${dBloat.toFixed(0)}ms bufferbloat`);
+    html += `<div class="wiz-delta ${improved ? 'up' : 'flat'}">${improved ? '🎉 تحسّن! ' + bits.join(' • ') : 'النتائج متقاربة — تأكد أنك طبّقت الخطوات وأعدت تشغيل الراوتر، وأن القياس على نفس الجهاز والمكان.'}</div>`;
+    $('wizCmp').innerHTML = html;
+    btn.disabled = false; btn.textContent = '📊 إعادة القياس';
+  },
+
+  next() {
+    if (this.step < this.steps.length - 1) { this.step++; this.render(); }
+    else { this.close(); toast('✅ اكتمل الضبط — راوترك الآن مضبوط حسب قياساتك'); }
+  },
+  prev() { if (this.step > 0) { this.step--; this.render(); } }
+};
+$('btnOpenWizard').addEventListener('click', () => Wizard.open());
+$('btnOpenWizard2').addEventListener('click', () => Wizard.open());
+$('wizClose').addEventListener('click', () => Wizard.close());
+$('wizNext').addEventListener('click', () => Wizard.next());
+$('wizPrev').addEventListener('click', () => Wizard.prev());
 
 /* ============================================================
    الإقلاع

@@ -1,5 +1,5 @@
 /* راوتر السعودية الذكي — Service Worker */
-const CACHE = 'smart-router-v2';
+const CACHE = 'smart-router-v3';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
