@@ -30,17 +30,10 @@
       <span id="netStatusLabel" class="net-status">جارٍ الفحص…</span>
     </div>
   </div>
-  <button id="btnOptimize" class="btn-optimize">
-    <span class="spark">⚡</span><span id="optimizeLabel">تحسين تلقائي</span>
+  <button id="btnQuick" class="btn-optimize">
+    <span class="spark">⚡</span><span id="quickLabel">فحص سريع</span>
   </button>
 </header>
-
-<!-- شريط تنبيه الحماية -->
-<div id="securityBanner" class="security-banner hidden">
-  <span>🚨</span>
-  <p id="securityBannerText">جهاز غير معروف انضم للشبكة!</p>
-  <button id="securityBannerAction">عرض</button>
-</div>
 
 <main id="views">
 
@@ -61,76 +54,70 @@
       <div class="quick-stats">
         <div class="qstat"><span class="qs-icon">📶</span><b id="statPing">—</b><small>Ping (ms)</small></div>
         <div class="qstat"><span class="qs-icon">📊</span><b id="statJitter">—</b><small>Jitter (ms)</small></div>
-        <div class="qstat"><span class="qs-icon">⬇️</span><b id="statDown">—</b><small>Mbps تقديري</small></div>
-        <div class="qstat"><span class="qs-icon">🌐</span><b id="statType">—</b><small>نوع الاتصال</small></div>
+        <div class="qstat"><span class="qs-icon">⬇️</span><b id="statDown">—</b><small>تحميل Mbps</small></div>
+        <div class="qstat"><span class="qs-icon">⬆️</span><b id="statUp">—</b><small>رفع Mbps</small></div>
       </div>
     </div>
 
-    <!-- اختبار السرعة -->
+    <!-- الاختبار الكامل -->
     <div class="card speed-card">
       <div class="card-head">
-        <h2>🚀 اختبار السرعة الحقيقي</h2>
-        <button id="btnSpeedTest" class="btn-primary">ابدأ الاختبار</button>
+        <h2>🚀 اختبار الاتصال الكامل</h2>
+        <button id="btnFullTest" class="btn-primary">ابدأ الاختبار</button>
       </div>
       <div class="speed-meter">
         <div class="speed-value"><span id="speedNow">0</span><small> Mbps</small></div>
         <div class="speed-bar"><div id="speedBarFill"></div></div>
-        <div id="speedPhase" class="speed-phase">جاهز — الاختبار عبر خوادم Cloudflare</div>
+        <div id="speedPhase" class="speed-phase">قياس حقيقي عبر خوادم Cloudflare: تحميل ← رفع ← استقرار تحت الحِمل</div>
+      </div>
+      <div id="fullResults" class="full-results hidden">
+        <div class="fr"><small>تحميل</small><b id="frDown">—</b></div>
+        <div class="fr"><small>رفع</small><b id="frUp">—</b></div>
+        <div class="fr"><small>Bufferbloat</small><b id="frBloat">—</b></div>
+        <div class="fr"><small>التقييم</small><b id="frGrade">—</b></div>
       </div>
     </div>
 
-    <!-- كشف الاختناقات -->
+    <!-- تحليل وتوصيات حقيقية -->
     <div class="card">
-      <div class="card-head"><h2>🔍 كشف الاختناقات</h2></div>
-      <div id="bottleneckList" class="bottleneck-list">
-        <div class="empty-hint">اضغط «تحسين تلقائي» بالأعلى ليقوم الذكاء الاصطناعي بتحليل شبكتك</div>
+      <div class="card-head"><h2>🔎 تحليل وتوصيات</h2></div>
+      <div id="analysisList" class="bottleneck-list">
+        <div class="empty-hint">اضغط «ابدأ الاختبار» بالأعلى — التحليل يُبنى على قياساتك الفعلية، لا أرقام عشوائية.</div>
       </div>
-    </div>
-
-    <!-- سجل الذكاء الاصطناعي -->
-    <div class="card">
-      <div class="card-head"><h2>🤖 قرارات الذكاء الاصطناعي</h2></div>
-      <ul id="aiLog" class="ai-log">
-        <li class="ai-idle">النظام يراقب الشبكة في الخلفية…</li>
-      </ul>
     </div>
   </section>
 
-  <!-- ============ 2) الأجهزة والحماية ============ -->
-  <section id="view-devices" class="view">
+  <!-- ============ 2) جهازي والاتصال ============ -->
+  <section id="view-device" class="view">
     <div class="card">
       <div class="card-head">
-        <h2>🛡️ الحماية الذكية</h2>
-        <label class="switch">
-          <input type="checkbox" id="shieldToggle" checked>
-          <span class="slider"></span>
-        </label>
+        <h2>🛰️ بصمة الاتصال</h2>
+        <button id="btnRefreshFP" class="btn-ghost">تحديث</button>
       </div>
-      <div class="shield-stats">
-        <div class="shield-stat"><b id="shieldBlocked">0</b><small>محاولة اختراق مصدودة</small></div>
-        <div class="shield-stat"><b id="shieldDevices">0</b><small>جهاز متصل</small></div>
-        <div class="shield-stat"><b id="shieldAlerts">0</b><small>تنبيه أمني</small></div>
+      <p class="card-desc">بيانات حقيقية عن اتصالك الحالي — تُجلب مباشرة من شبكة Cloudflare العالمية وواجهات المتصفح.</p>
+      <div id="fpGrid" class="fp-grid">
+        <div class="fp-row"><span>جارٍ الجلب…</span></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-head">
-        <h2>📱 الأجهزة المتصلة</h2>
-        <button id="btnScanDevices" class="btn-ghost">فحص الشبكة</button>
-      </div>
-      <div id="deviceList" class="device-list"></div>
+      <div class="card-head"><h2>📱 مواصفات جهازك</h2></div>
+      <div id="specGrid" class="fp-grid"></div>
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>👨‍👩‍👧 الرقابة الأبوية</h2></div>
-      <p class="card-desc">فعّل وضع الأطفال على أي جهاز لحجب المحتوى غير المناسب وتحديد وقت الاستخدام، وإيقاف الإنترنت وقت النوم.</p>
-      <div class="kids-row">
-        <div>
-          <b>إيقاف الإنترنت وقت النوم</b>
-          <small id="bedtimeLabel">من 10:00 م إلى 6:00 ص</small>
-        </div>
-        <label class="switch"><input type="checkbox" id="bedtimeToggle"><span class="slider"></span></label>
+      <div class="card-head">
+        <h2>🧭 أسرع DNS لك</h2>
+        <button id="btnDnsBench" class="btn-primary">قياس</button>
       </div>
+      <p class="card-desc">يقيس زمن استجابة موفري DNS فعلياً من موقعك، ويقترح الأسرع — تغييره في الراوتر يسرّع فتح المواقع.</p>
+      <div id="dnsList" class="dns-list"></div>
+    </div>
+
+    <div class="card note-card">
+      <h2>ℹ️ عن فحص أجهزة البيت</h2>
+      <p class="card-desc">لأسباب أمنية، لا يسمح أي متصفح بمسح الشبكة المحلية أو رؤية أجهزة البيت وعناوينها — هذا يتطلب الدخول على لوحة الراوتر أو تطبيقاً نظامياً. لذلك ركّزنا هنا على ما يمكن قياسه <b>بدقة حقيقية</b> عن جهازك واتصالك، بدل عرض قائمة أجهزة تخمينية.</p>
+      <a id="routerLink" class="router-link" target="_blank" rel="noopener">🔧 فتح لوحة الراوتر (192.168.x.1)</a>
     </div>
   </section>
 
@@ -138,7 +125,7 @@
   <section id="view-coverage" class="view">
     <div class="card">
       <div class="card-head"><h2>🗺️ خريطة تغطية البيت</h2></div>
-      <p class="card-desc">امشِ بجوالك لكل غرفة واضغط عليها ثم «قياس هنا» — التطبيق يقيس جودة الإشارة الفعلية ويلوّن الخريطة.</p>
+      <p class="card-desc">امشِ بجوالك لكل غرفة، اضغط عليها ثم «قياس هنا» — يقيس <b>زمن الاستجابة والسرعة الفعلية</b> في مكانك ويلوّن الخريطة. القياس حقيقي لكل غرفة.</p>
       <div id="homeMap" class="home-map"></div>
       <div class="coverage-legend">
         <span><i class="dot dot-good"></i> ممتازة</span>
@@ -150,15 +137,9 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>📡 محلل القنوات</h2><button id="btnScanChannels" class="btn-ghost">تحليل</button></div>
-      <div id="channelChart" class="channel-chart"></div>
-      <div id="channelAdvice" class="advice-box hidden"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h2>💡 توصيات ذكية</h2></div>
+      <div class="card-head"><h2>💡 تحليل التغطية</h2></div>
       <ul id="coverageAdvice" class="advice-list">
-        <li>قِس 3 غرف على الأقل ليقترح الذكاء الاصطناعي أفضل مكان للراوتر.</li>
+        <li>قِس 3 غرف على الأقل ليقارن التطبيق بين مواقعك ويقترح أفضل مكان للراوتر.</li>
       </ul>
     </div>
   </section>
@@ -167,14 +148,14 @@
   <section id="view-gaming" class="view">
     <div class="card gaming-hero">
       <div class="card-head">
-        <h2>🎮 وضع الألعاب الفائق</h2>
+        <h2>🎮 مراقب الألعاب الحي</h2>
         <label class="switch"><input type="checkbox" id="gamingToggle"><span class="slider"></span></label>
       </div>
       <div class="gaming-ping">
         <div id="gamePing" class="game-ping-value">—</div>
         <div class="game-ping-unit">ms</div>
       </div>
-      <div id="gameGrade" class="game-grade">شغّل الوضع لبدء المراقبة الحية</div>
+      <div id="gameGrade" class="game-grade">شغّل المراقبة لقياس Ping الحي فعلياً</div>
       <canvas id="pingCanvas" width="640" height="160"></canvas>
       <div class="gaming-stats">
         <div class="gstat"><b id="gJitter">—</b><small>Jitter</small></div>
@@ -194,12 +175,12 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h2>⚙️ تحسينات مفعّلة</h2></div>
-      <ul id="gamingOpts" class="advice-list dim">
-        <li>أولوية قصوى لحزم الألعاب (QoS)</li>
-        <li>تجميد التحديثات الخلفية أثناء اللعب</li>
-        <li>توجيه مباشر لأقرب خادم ألعاب</li>
-        <li>حماية من تقلبات الـ Ping</li>
+      <div class="card-head"><h2>⚙️ نصائح لأفضل أداء لعب</h2></div>
+      <ul class="advice-list dim">
+        <li>فعّل <b>QoS / أولوية الألعاب</b> في راوترك لجهاز اللعب.</li>
+        <li>استخدم <b>سلك شبكة</b> بدل الواي فاي لأقل Ping ممكن.</li>
+        <li>قلّل التحميلات الخلفية أثناء اللعب (تحديثات، بث).</li>
+        <li>إن كان الـ Bufferbloat عالياً، فعّل <b>SQM</b> في الراوتر لتثبيت الـ Ping.</li>
       </ul>
     </div>
   </section>
@@ -211,7 +192,7 @@
         <h2>🩺 التشخيص الذكي الشامل</h2>
         <button id="btnDiagnose" class="btn-primary">ابدأ الفحص</button>
       </div>
-      <p class="card-desc">بدل ما تتصل بالدعم الفني… التطبيق يفحص كل شيء ويقول لك وين المشكلة، وش سببها، وكيف تنحل.</p>
+      <p class="card-desc">فحص حقيقي متكامل يقيس كل شيء، ويعطيك تقريراً بالمشاكل وأسبابها وحلولها العملية — قابل للنسخ وإرساله للدعم الفني.</p>
       <div id="diagSteps" class="diag-steps"></div>
     </div>
 
@@ -229,13 +210,12 @@
 <!-- ===== التبويبات السفلية ===== -->
 <nav class="tabbar">
   <button class="tab active" data-view="home"><span>🏠</span>الرئيسية</button>
-  <button class="tab" data-view="devices"><span>🛡️</span>الأجهزة</button>
+  <button class="tab" data-view="device"><span>📱</span>جهازي</button>
   <button class="tab" data-view="coverage"><span>🗺️</span>التغطية</button>
   <button class="tab" data-view="gaming"><span>🎮</span>الألعاب</button>
   <button class="tab" data-view="diagnose"><span>🩺</span>التشخيص</button>
 </nav>
 
-<!-- Toast -->
 <div id="toast" class="toast hidden"></div>
 
 <script src="app.js"></script>

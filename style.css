@@ -134,7 +134,31 @@ main{padding:16px;display:block;max-width:760px;margin-inline:auto}
 .speed-value small{font-size:1rem;color:var(--txt2);font-weight:700}
 .speed-bar{height:12px;border-radius:99px;background:var(--card2);border:1px solid var(--line);overflow:hidden;margin:12px 0 8px}
 #speedBarFill{height:100%;width:0%;background:var(--grad);border-radius:99px;transition:width .3s}
-.speed-phase{text-align:center;font-size:.8rem;color:var(--txt2)}
+.speed-phase{text-align:center;font-size:.8rem;color:var(--txt2);line-height:1.6}
+.full-results{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.fr{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.fr small{display:block;font-size:.66rem;color:var(--txt2);margin-bottom:3px}
+.fr b{font-size:.92rem;font-weight:800}
+.grade-good{color:var(--good)!important}.grade-mid{color:var(--mid)!important}.grade-bad{color:var(--bad)!important}
+
+/* ===== بصمة الاتصال + المواصفات ===== */
+.fp-grid{display:flex;flex-direction:column;gap:2px}
+.fp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.fp-row:last-child{border-bottom:0}
+.fp-row span{font-size:.82rem;color:var(--txt2);flex-shrink:0}
+.fp-row b{font-size:.82rem;font-weight:700;text-align:left;word-break:break-word;direction:ltr;unicode-bidi:plaintext}
+.note-card{background:linear-gradient(180deg,rgba(129,140,248,.08),var(--bg2))}
+.note-card h2{font-size:.95rem;font-weight:800;margin-bottom:8px}
+.router-link{display:inline-block;margin-top:6px;color:var(--accent);font-weight:700;font-size:.84rem;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+
+/* ===== DNS ===== */
+.dns-list{display:flex;flex-direction:column;gap:8px}
+.dns-row{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.dns-row span{font-size:.86rem;font-weight:700}
+.dns-row span small{color:var(--txt2);font-weight:500;font-size:.72rem;direction:ltr;display:inline-block}
+.dns-row b{font-size:.88rem;font-weight:800;direction:ltr}
+.dns-row.best{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.08)}
+.dns-row.best b{color:var(--good)}
 
 /* ===== الاختناقات ===== */
 .bottleneck-list{display:flex;flex-direction:column;gap:10px}
